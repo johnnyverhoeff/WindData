@@ -31,6 +31,13 @@ public class WindDataParser {
         roseData = new HashMap<>();
     }
     
+    public String getLocation() {
+        return location;
+    }    
+    
+    public String getDate() {
+        return date;
+    }
     protected void parse() throws FileNotFoundException, IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = "";
@@ -50,25 +57,34 @@ public class WindDataParser {
     }
     
     protected void extractLocationAndDate(String line) {
-        String[] locationAndDate = line.split("Year");
-        location = locationAndDate[0].trim();
-        date = locationAndDate[1].trim();
-        //System.out.println("date: " + date + "Loc:  " + location);
+        try {
+            String[] locationAndDate = line.split("Year");
+            location = locationAndDate[0].trim();
+            date = locationAndDate[1].trim();
+        }
+        catch (Exception e) {
+            location = "";
+            date = "";
+        }
+        
     }
     
     protected void extractCumulative(String line) {
-      String dist[] = line.trim().split(" ");
-      
-      double fromWindSpeed = Double.parseDouble(dist[0]);
-      double cumWind;
       try {
-          cumWind = Double.parseDouble(dist[dist.length - 1]);
+        String dist[] = line.trim().split(" ");
+        double fromWindSpeed = Double.parseDouble(dist[0]);
+        double cumWind;
+        try {
+            cumWind = Double.parseDouble(dist[dist.length - 1]);
+        }
+        catch (NumberFormatException ex) {
+            cumWind = 0;
+        }
+        cumulativeData.put(fromWindSpeed, cumWind);
+      } 
+      catch (Exception e) {
+          
       }
-      catch (NumberFormatException ex) {
-          cumWind = 0;
-      }
-      cumulativeData.put(fromWindSpeed, cumWind);
-      
     }
     
     protected double getCumulativeAtWindSpeed(double windSpeed) {
