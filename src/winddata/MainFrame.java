@@ -132,6 +132,9 @@ public class MainFrame extends javax.swing.JFrame {
             
             if (goodFile) {
                 pathLabel.setText(chosenFile.getPath());
+                WindDataParser parser = new WindDataParser(chosenFile);
+                parser.parse();
+                System.out.println("44.5: " + parser.getCumulativeAtWindSpeed(24.5));
             }
             else {
                 JOptionPane.showMessageDialog(this, "Selected File is not a KNMI Hydra Wind Data DISTRIBUTIVE RELATIVE file", "Incorrect file", JOptionPane.ERROR_MESSAGE);
