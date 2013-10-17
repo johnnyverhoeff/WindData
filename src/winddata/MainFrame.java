@@ -4,15 +4,41 @@
  */
 package winddata;
 
+
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import org.apache.poi.ss.formula.functions.Column;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+
 
 /**
  *
@@ -20,12 +46,18 @@ import javax.swing.JOptionPane;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    
+    private File excelFile;
+    private WindDataParser data;
+    
+    private static String sheetName = "Yield from actual data";
     /**
      * Creates new form MainFrame
      */
     public MainFrame() {
         initComponents();
         setLocationToMiddel();
+        addStations();
     }
     /**
      * This routine sets the frame in the middle of the screen
@@ -42,6 +74,36 @@ public class MainFrame extends javax.swing.JFrame {
         
     }
     
+    private void addStations() {
+        stationBox.addItem("210 Valkenburg");
+        stationBox.addItem("235 De Kooy");
+        stationBox.addItem("240 Schiphol");
+        stationBox.addItem("250 Terschelling");
+        stationBox.addItem("260 De Bilt");
+        stationBox.addItem("265 Soesterberg");
+        stationBox.addItem("268 Houtrib");
+        stationBox.addItem("269 Lelystad");
+        stationBox.addItem("270 Leeuwarden");
+        stationBox.addItem("275 Deelen");
+        stationBox.addItem("277 Lauwersoog");
+        stationBox.addItem("279 Hoogeveen");
+        stationBox.addItem("280 Eelde");
+        stationBox.addItem("285 Huibertgat");
+        stationBox.addItem("290 Twenthe");
+        stationBox.addItem("308 Cadzand");
+        stationBox.addItem("310 Vlissingen");
+        stationBox.addItem("312 Oosterschelde");
+        stationBox.addItem("330 Hoek van Holland");
+        stationBox.addItem("343 Rotterdam Geulhaven");
+        stationBox.addItem("344 Zestienhoven");
+        stationBox.addItem("348 Cabauw");
+        stationBox.addItem("350 Gilze-Rijen");
+        stationBox.addItem("356 Herwijnen");
+        stationBox.addItem("370 Eindhoven");
+        stationBox.addItem("375 Volkel");
+        stationBox.addItem("380 Beek"); 
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -54,10 +116,16 @@ public class MainFrame extends javax.swing.JFrame {
         selectWindData = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         pathLabel = new javax.swing.JLabel();
+        selectExcelDocument = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        excelFilePathLabel = new javax.swing.JLabel();
+        executeDataToExcel = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
+        stationBox = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        selectWindData.setText("Select KNMI Wind Data");
+        selectWindData.setText("Select KNMI Wind Data via File");
         selectWindData.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 selectWindDataActionPerformed(evt);
@@ -65,6 +133,31 @@ public class MainFrame extends javax.swing.JFrame {
         });
 
         jLabel1.setText("Chosen File Path:");
+
+        selectExcelDocument.setText("Select Excel Document");
+        selectExcelDocument.setEnabled(false);
+        selectExcelDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectExcelDocumentActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("Chosen File Path:");
+
+        executeDataToExcel.setText("Execute");
+        executeDataToExcel.setEnabled(false);
+        executeDataToExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                executeDataToExcelActionPerformed(evt);
+            }
+        });
+
+        jButton1.setText("Download");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -74,24 +167,48 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(selectWindData)
-                        .addGap(0, 237, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(pathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel2)
+                                .addGap(57, 57, 57))
+                            .addComponent(selectExcelDocument)
+                            .addComponent(executeDataToExcel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(excelFilePathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(selectWindData)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 188, Short.MAX_VALUE)
+                        .addComponent(stationBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(selectWindData)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(selectWindData)
+                    .addComponent(jButton1)
+                    .addComponent(stationBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addComponent(pathLabel))
-                .addContainerGap(241, Short.MAX_VALUE))
+                .addGap(52, 52, 52)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(excelFilePathLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(selectExcelDocument)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel2)
+                        .addGap(18, 18, 18)
+                        .addComponent(executeDataToExcel)))
+                .addContainerGap(100, Short.MAX_VALUE))
         );
 
         pack();
@@ -104,8 +221,13 @@ public class MainFrame extends javax.swing.JFrame {
  */
     private void selectWindDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectWindDataActionPerformed
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Geef de locatie van het bestand");
+        fileChooser.setDialogTitle("Provide the location of the file");
 
+        FileNameExtensionFilter txtFilter = new FileNameExtensionFilter("Txt File", "txt");
+        fileChooser.addChoosableFileFilter(txtFilter);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setFileFilter(txtFilter);
+        
         int userSelection = fileChooser.showOpenDialog(this);
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             System.out.println("Approve");
@@ -121,7 +243,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         
     }//GEN-LAST:event_selectWindDataActionPerformed
-    /**
+ /**
      * Is Called when there's a file choosen 
      * Checks if it is correct and sets pathlabel
      * @param chosenFile 
@@ -132,9 +254,13 @@ public class MainFrame extends javax.swing.JFrame {
             
             if (goodFile) {
                 pathLabel.setText(chosenFile.getPath());
-                WindDataParser parser = new WindDataParser(chosenFile);
-                parser.parse();
-                System.out.println("44.5: " + parser.getCumulativeAtWindSpeed(24.5));
+                data = new WindDataParser(chosenFile);
+                
+                
+                excelFileCanBeChosen();
+                /*for (double i = 0.; i <= 25.; i++){
+                    System.out.println("U: " + i + " -> cum:" + data.getCumulativeAtWindSpeed(i));
+                }*/
             }
             else {
                 JOptionPane.showMessageDialog(this, "Selected File is not a KNMI Hydra Wind Data DISTRIBUTIVE RELATIVE file", "Incorrect file", JOptionPane.ERROR_MESSAGE);
@@ -161,8 +287,177 @@ public class MainFrame extends javax.swing.JFrame {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String firstLine = reader.readLine();
         reader.close();
-        return firstLine.contains("DISTRIBUTIVE RELATIVE");
+        return firstLine.contains("RELATIVE");
+        //return firstLine.contains("DISTRIBUTIVE RELATIVE");
     }
+    
+    private void excelFileCanBeChosen() {
+        selectExcelDocument.setEnabled(true);
+    }
+    
+    
+    private void selectExcelDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectExcelDocumentActionPerformed
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Provide the location of the Excel file");
+
+        FileNameExtensionFilter excelFilter = new FileNameExtensionFilter("Excel File", "xlsx", "xls");
+        fileChooser.addChoosableFileFilter(excelFilter);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setFileFilter(excelFilter);
+        
+        int userSelection = fileChooser.showOpenDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            System.out.println("Approve");
+            
+            File selectedFile = fileChooser.getSelectedFile();
+            
+            excelFileChosen(selectedFile);
+            
+        } else if (userSelection == JFileChooser.CANCEL_OPTION) {
+            System.out.println("Cancel");
+        }
+    }//GEN-LAST:event_selectExcelDocumentActionPerformed
+    
+    protected void excelFileChosen(File file) {
+        excelFilePathLabel.setText(file.getAbsolutePath());
+        
+        excelFile = file;
+        canBeExecuted();
+    }
+    
+    protected void canBeExecuted(){
+        executeDataToExcel.setEnabled(true);
+    }
+    
+    private void executeDataToExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_executeDataToExcelActionPerformed
+        try {
+            Workbook wb = new XSSFWorkbook(new FileInputStream(excelFile));
+            XSSFSheet sheet = null;
+            if (wb.getSheet(sheetName) == null) sheet = (XSSFSheet) wb.createSheet(sheetName);
+            else {
+                for (int i = 2; i < 100; i++) {
+                    if (wb.getSheet(sheetName + " " + i) == null) {
+                        sheet = (XSSFSheet) wb.createSheet(sheetName + " " + i);
+                        break;
+                    }
+                }
+            }
+  
+            data.parse();
+            
+            Row locationRow = sheet.createRow(0);
+            Cell locationCell = locationRow.createCell(0, Cell.CELL_TYPE_STRING);
+            locationCell.setCellValue("Location:");
+            
+            locationCell = locationRow.createCell(1, Cell.CELL_TYPE_STRING);
+            locationCell.setCellValue(data.getLocation());
+            
+            Row dateRow = sheet.createRow(1);
+            Cell dateCell = dateRow.createCell(0, Cell.CELL_TYPE_STRING);
+            dateCell.setCellValue("Date:");
+            
+            dateCell = dateRow.createCell(1, Cell.CELL_TYPE_STRING);
+            dateCell.setCellValue(data.getDate());
+            
+            
+            Row row = sheet.createRow(3);
+            Cell cell = row.createCell(0, Cell.CELL_TYPE_STRING);
+            cell.setCellValue("Windpeed [m/s]");
+            
+            cell = row.createCell(1, Cell.CELL_TYPE_STRING);
+            cell.setCellValue("f(V)");
+            
+            cell = row.createCell(2, Cell.CELL_TYPE_STRING);
+            cell.setCellValue("Power [MW]");
+            
+            cell = row.createCell(3, Cell.CELL_TYPE_STRING);
+            cell.setCellValue("P(V)*f(V)*dV");
+            
+            cell = row.createCell(4, Cell.CELL_TYPE_STRING);
+            cell.setCellValue("Energy per year [GWh/year]");
+            
+            Cell energy = null;
+            
+            for (int i = 3; i < 27; i++) {
+                row = sheet.createRow(i + 1);
+                if (i == 3) energy = row.createCell(4, Cell.CELL_TYPE_FORMULA);
+                Cell windspeed = row.createCell(0, Cell.CELL_TYPE_NUMERIC);
+                windspeed.setCellValue(i);
+                
+                Cell chance = row.createCell(1, Cell.CELL_TYPE_NUMERIC);
+                chance.setCellValue(data.getCumulativeAtWindSpeed(i - 3) / 100.0);
+                
+                Cell power = row.createCell(2, Cell.CELL_TYPE_FORMULA);
+                power.setCellFormula("'Power Curve & Rotational Speed'!D" + (14 + i));
+                
+                Cell integral = row.createCell(3, Cell.CELL_TYPE_FORMULA);
+                int j = i + 2;
+                if (i == 3) integral.setCellFormula("0");
+                else integral.setCellFormula("B" + j + "*C" + j + "*(A" + j + "-A" + (j - 1) + ")");
+                
+            }
+            
+            energy.setCellFormula(365.25 * 24 * Math.pow(10, -3) + "*SUM(D5:D28)" );
+            
+            
+            
+            
+            
+            try {
+                wb.write(new FileOutputStream(excelFile));
+            }
+            catch (FileNotFoundException ex) {
+                int userInput = JOptionPane.showConfirmDialog(this, "The excel file is in use, please close excel", "File in use", JOptionPane.ERROR_MESSAGE);
+                if (userInput == JOptionPane.YES_OPTION)
+                    executeDataToExcelActionPerformed(evt);
+                
+                        
+                        
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_executeDataToExcelActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try {
+            String location = (String) stationBox.getSelectedItem();
+            String stationNumber = location.substring(0, 3);
+            
+            URL url = new URL("http://www.knmi.nl/samenw/hydra/tables/cuml_rel/s" + stationNumber + "-13.txt");
+            URLConnection urlConnection = url.openConnection();
+            urlConnection.setConnectTimeout(1000);
+            urlConnection.setReadTimeout(1000);
+            
+            BufferedReader breader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            
+            StringBuilder stringBuilder = new StringBuilder();
+            
+            String line;
+            while ((line = breader.readLine()) != null) {
+                stringBuilder.append(line).append('\n');
+            }
+            
+            //System.out.println(stringBuilder.toString());
+            String fileName = "s" + stationNumber + "-13.txt";
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+            writer.write(stringBuilder.toString());
+            writer.close();
+            
+            File file = new File(fileName);
+            fileChosen(file);
+            
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }//GEN-LAST:event_jButton1ActionPerformed
+   
+    
+    
+    
     
     
     
@@ -218,8 +513,14 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel excelFilePathLabel;
+    private javax.swing.JButton executeDataToExcel;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel pathLabel;
+    private javax.swing.JButton selectExcelDocument;
     private javax.swing.JButton selectWindData;
+    private javax.swing.JComboBox stationBox;
     // End of variables declaration//GEN-END:variables
 }

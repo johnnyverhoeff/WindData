@@ -94,11 +94,8 @@ public class WindDataParser {
     protected void extractRoseData(String line) {
         String dist[] = line.trim().split(" ");
         double fromWindSpeed = Double.parseDouble(dist[0]);
-
-        double rose[] = new double[12];
         
-        ArrayList<Double> distData = new ArrayList<>();
-       
+        ArrayList<Double> distData = new ArrayList<>();      
         
         for (int i = 5; i < dist.length; i++) {
             if (!dist[i].isEmpty()) {
